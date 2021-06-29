@@ -59,21 +59,36 @@ void findBestAdvPlacement(
 	
 	std::priority_queue<int, std::vector<int>, std::greater<int> > advOuts;
 	AdvPlacement nextAdv(depth - 1);
-	for (; iPeriod < periods.size(); iPeriod++)
+	while (iPeriod < periods.size())
 	{
 		int advIn = std::max(advInLimit, periods[iPeriod].start);
-		int advOut = periods[iPeriod].end - ADV_LENGTH;
-		if (advIn <= advOut)
+		int maxAdvOut = 0;
+		do
 		{
-			advOuts.push(advOut);
+			int advOut = periods[iPeriod].end - ADV_LENGTH;
+			if (advIn <= advOut)
+			{
+				maxAdvOut = std::max(advOut, maxAdvOut);
+				advOuts.push(advOut);
+			}
+		} while (++iPeriod < periods.size() and 
+					periods[iPeriod].start == periods[iPeriod - 1].start);
+		
+		
+		if (maxAdvOut > 0)
+		{
 			while (advIn > advOuts.top())
 				advOuts.pop();
 			
 			
 			if (depth > 1)
-				findBestAdvPlacement(
-						periods, nextAdv,
-						iPeriod + 1, advIn + ADV_LENGTH);
+				if (nextAdv.advIns[0] <= maxAdvOut or 
+						nextAdv.advIns[0] <  advIn + ADV_LENGTH)
+				{
+					findBestAdvPlacement(
+							periods, nextAdv,
+							iPeriod, advIn + ADV_LENGTH);
+				}
 					
 			int newNumSpec = advOuts.size() + nextAdv.numSpec;
 			if (advPlacement.numSpec < newNumSpec)
